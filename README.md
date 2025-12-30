@@ -1,6 +1,6 @@
 # 專案實戰解析：基於深度學習建構卷積神經網路模型演算法，實現圖像辨識分類
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1AMu-NHA90gZi46nU30Hw_G_bmK2yZ7zC?usp=sharing)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1Fb4Lrn8sovB8999nKf4RMP7hejy_XArb?authuser=1)
 
 ## 📋 目錄
 
