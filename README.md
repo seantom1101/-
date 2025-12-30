@@ -1,16 +1,16 @@
 # 專案實戰解析：基於深度學習建構卷積神經網路模型演算法，實現圖像辨識分類
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1Fb4Lrn8sovB8999nKf4RMP7hejy_XArb?usp=drive_link)
+(https://colab.research.google.com/drive/1Fb4Lrn8sovB8999nKf4RMP7hejy_XArb?usp=drive_link)
 
 ## 📋 目錄
 
-- [前言](#前言)
-- [基礎知識介紹](#基礎知識介紹)
-- [數據集收集](#數據集收集)
-- [模型訓練](#模型訓練)
-- [圖像辨識分類](#圖像辨識分類)
-- [結果展示](#結果展示)
-- [總結](#總結)
+- [前言]
+- [基礎知識介紹]
+- [數據集收集]
+- [模型訓練]
+- [圖像辨識分類]
+- [結果展示]
+- [總結]
   
 ---
 
@@ -48,6 +48,12 @@ TensorFlow 是Google開源的計算框架，可以很好地支援深度學習的
 ---
 
 ## 數據集收集
+在進行影像辨識前，首先需要收集資料集，其次對於資料集做預處理，然後才能通過
+深度卷積神經網路來進行特徵學習，得到估計分類模型。對於資料集的要求，在卷積神經網絡
+（CNN）中，由於對輸入影像向量的權值參數的數量是固定的，所以在用卷積網路（CNN）對資料集
+進行模型訓練前需進行影像預處理，確保輸入的影像尺寸是固定一致的。
+<img width="536" height="45" alt="JP9DRjfC7CRtFiN8c_TjfLoWYoezGqym0WUiWeriqoexe8JmGJ2qV11IIg1feOiOAcXYWms7wVndFAjUeKFSIjvPZsT-puVcrBImOUMp6Ua_n8kNK5qX-PLfvhDA4YLLd39m5bddEUK5IcImQSg8Tw_3vP8E7dxxJN47LkDmsIF1WNKNT31djIeRbUbc1_K5tEp3vJrTztXX1AuBzfBileR" src="https://github.com/user-attachments/assets/eda0a3d3-0177-407f-871c-5431b6ab403a" />
+圖一 分類網路模型流程圖
 
 本案例以實現**垃圾分類識別**作為最終目標，數據集包含四類圖片：
 
