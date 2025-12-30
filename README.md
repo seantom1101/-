@@ -64,11 +64,8 @@ TensorFlow 是Google開源的計算框架，可以很好地支援深度學習的
 
 每類圖片數據集規模為200張（學習者可依需求選擇數據集類型及規模）。
 
-![Flow Chart](images/flowchart.png)
-*圖一：分類網路模型流程圖* 
-
-![Directories](images/directories.png)  
-*圖二：數據集目錄結構*  
+<img width="493" height="151" alt="螢幕擷取畫面 2025-12-30 230702" src="https://github.com/user-attachments/assets/f01d2580-e277-4157-af91-2bcfef2aebac" />
+圖二 數據集目錄
 
 ### 數據預處理流程
 
