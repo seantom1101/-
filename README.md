@@ -55,301 +55,93 @@ TensorFlow 是Google開源的計算框架，可以很好地支援深度學習的
 <img width="536" height="45" alt="JP9DRjfC7CRtFiN8c_TjfLoWYoezGqym0WUiWeriqoexe8JmGJ2qV11IIg1feOiOAcXYWms7wVndFAjUeKFSIjvPZsT-puVcrBImOUMp6Ua_n8kNK5qX-PLfvhDA4YLLd39m5bddEUK5IcImQSg8Tw_3vP8E7dxxJN47LkDmsIF1WNKNT31djIeRbUbc1_K5tEp3vJrTztXX1AuBzfBileR" src="https://github.com/user-attachments/assets/eda0a3d3-0177-407f-871c-5431b6ab403a" />
 圖一 分類網路模型流程圖
 
-本案例以實現**垃圾分類識別**作為最終目標，數據集包含四類圖片：
+# 程式
 
-- 廚餘垃圾 (Kitchen waste)
-- 可回收垃圾 (Recyclable)
-- 有毒垃圾 (Hazardous)
-- 其它垃圾 (Other)
+**安裝套件**
 
-每類圖片數據集規模為200張（學習者可依需求選擇數據集類型及規模）。
-
-<img width="493" height="151" alt="螢幕擷取畫面 2025-12-30 230702" src="https://github.com/user-attachments/assets/f01d2580-e277-4157-af91-2bcfef2aebac" />
-圖二 數據集目錄
-
-### 數據預處理流程
-
-#### 1. 圖片重命名
-```python
-#數據圖片rename
-#數據集路徑：(self.image_path = "./picture/")
-   def rename(self):
-        listdir = os.listdir(self.image_path)
-        i = 0
-        while i < len(listdir):
-            images_list_dir = os.listdir(os.path.join(self.image_path, listdir[i]))
-            j = 0
-            while j < len(images_list_dir):
-                old_name = os.path.join(self.image_path, listdir[i], images_list_dir[j])
-                new_name = os.path.join(self.image_path, "%d-%d" % (i, j) + ".jpg")
-                os.rename(old_name, new_name)
-                j += 1
-            i += 1
-        for p in range(len(listdir)):
-            tmp_path = os.path.join(self.image_path, listdir[p])
-            if os.path.exists(tmp_path):
-                os.removedirs(tmp_path)
-```
-
-#### 2. 圖片尺寸统一
-```python
-#圖片resize
- def resize_img(self):
-        listdir = os.listdir(self.image_path)
-        for file in listdir:
-            file_path = os.path.join(self.image_path, file)
-            try:
-                imread = cv2.imread(file_path)
-                resize = cv2.resize(imread, (200, 200))
-                cv2.imwrite(os.path.join(self.image_path, file), resize)
-            except Exception:
-                os.remove(file_path)
-                continue
-
-```
-
-![After resize](images/after.png)  
-*圖三：預處理後數據集範例*  
-
-#### 3. 數據轉存為CSV
-```python
-#轉存圖片信息到csv文件
-#csv生成路徑：(csv_file_saved_path = "./picture/")
-def train_data_to_csv(self):
-        files = os.listdir(self.image_path)
-        data = []
-        for file in files:
-            data.append({"path": self.image_path + file, "label": file[0]})
-
-        frame = pd.DataFrame(data, columns=['path', 'label'])
-        dummies = pd.get_dummies(frame['label'], 'label')
-        concat = pd.concat([frame, dummies], 1)
-        concat.to_csv(csv_file_saved_path + "train.csv")
-
-```
-
-![CSV DEMO](images/csv.png)  
-*圖四：數據集轉存CSV示例*
+<img width="628" height="185" alt="螢幕擷取畫面 2025-12-28 205745" src="https://github.com/user-attachments/assets/efa11ff3-85db-4e25-ab7c-d0c57cdc0b6f" />
 
 ---
 
-## 模型訓練
+**初始化與屬性設定**
 
-### 網路結構設計
-
-本項目採用深度卷積神經網路，包含以下層次：
-
-1. **卷積層1-4** (Conv Layer)
-   - 卷積層：特徵提取
-   - 池化層：降維
-   - 批歸一化：加速收斂
-   - Dropout：防止過擬合
-
-2. **全連接層1-5** (FC Layer)
-   - 逐步降維：256 → 128 → 64 → 32 → 5
-   - 最終輸出5個類別的機率分佈
-
-![CNN](images/cnn.png)  
-*圖五：神經網路結構圖*  
-
-### 訓練過程
-
-```python
-#模型訓練算法
-def build_model():
-    with tf.name_scope("input"):
-        x = tf.placeholder(tf.float32, [None, 200, 200, 3], "x")
-        y = tf.placeholder(tf.float32, [None, 5], "y")
-
-    with tf.variable_scope("conv_layer_1"):
-        conv1 = tf.layers.conv2d(x, 64, [3, 3], activation=tf.nn.relu, name='conv1')
-        max1 = tf.layers.max_pooling2d(conv1, [2, 2], [2, 2])
-        bn1 = tf.layers.batch_normalization(max1, name='bn1')
-        output1 = tf.layers.dropout(bn1, name='droput')
-
-    with tf.variable_scope("conv_layer_2"):
-        conv2 = tf.layers.conv2d(output1, 64, [3, 3], activation=tf.nn.relu, name='conv2')
-        max2 = tf.layers.max_pooling2d(conv2, [2, 2], [2, 2], name='max2')
-        bn2 = tf.layers.batch_normalization(max2)
-        output2 = tf.layers.dropout(bn2, name='dropout')
-
-    with tf.variable_scope("conv_layer_3"):
-        conv3 = tf.layers.conv2d(output2, 64, [3, 3], activation=tf.nn.relu, name='conv3')
-        max3 = tf.layers.max_pooling2d(conv3, [2, 2], [2, 2], name='max3')
-        bn3 = tf.layers.batch_normalization(max3, name='bn3')
-        output3 = bn3
-
-    with tf.variable_scope("conv_layer_4"):
-        conv4 = tf.layers.conv2d(output3, 32, [3, 3], activation=tf.nn.relu, name='conv4')
-        max4 = tf.layers.max_pooling2d(conv4, [2, 2], [2, 2], name='max4')
-        bn4 = tf.layers.batch_normalization(max4, name='bn4')
-        output = bn4
-        flatten = tf.layers.flatten(output, 'flatten')
-
-    with tf.variable_scope("fc_layer1"):
-        fc1 = tf.layers.dense(flatten, 256, activation=tf.nn.relu)
-        fc_bn1 = tf.layers.batch_normalization(fc1, name='bn1')
-        dropout1 = tf.layers.dropout(fc_bn1, 0.5)
-
-    with tf.variable_scope("fc_layer2"):
-        fc2 = tf.layers.dense(dropout1, 128, activation=tf.nn.relu)
-        dropout2 = tf.layers.dropout(fc2)
-
-    with tf.variable_scope("fc_layer3"):
-        fc3 = tf.layers.dense(dropout2, 64)
-        dropout3 = tf.layers.dropout(fc3)
-
-    with tf.variable_scope("fc_layer4"):
-        fc4 = tf.layers.dense(dropout3, 32)
-
-    with tf.variable_scope("fc_layer5"):
-        fc5 = tf.layers.dense(fc4, 5)
-
-    softmax = tf.nn.softmax(fc5, name='softmax')
-    predict = tf.argmax(softmax, axis=1)
-    loss = tf.reduce_sum(tf.nn.softmax_cross_entropy_with_logits_v2(logits=fc5, labels=y, name='loss'))
-    tf.summary.scalar("loss", loss)
-    accuracy = tf.reduce_mean(tf.cast(tf.equal(predict, tf.argmax(y, axis=1)), tf.float32))
-    tf.summary.scalar("acc", accuracy)
-    merged = tf.summary.merge_all()
-    return x, y, predict, loss, accuracy, merged, softmax
-```
+<img width="657" height="237" alt="image" src="https://github.com/user-attachments/assets/2d9d247c-a798-4947-9dec-0a8604d14cce" />
 
 ---
 
-## 圖像識別分類
+**圖片處理相關**
 
-### 即時辨識功能
-
-#### 1. 圖片辨識模式
-```python
-#利用模型即時辨識影像
-    def predict_value(self, type='image', image_path=None):
-        saver = tf.train.Saver()
-        sess = tf.InteractiveSession()
-        saver.restore(sess, tf.train.latest_checkpoint("./h5_dell1/"))
-        if type == 'image':
-            assert image_path is not None
-            image = cv2.imread(image_path)
-            image = cv2.resize(image, (200, 200))
-            image = np.asarray(image, np.float32) / 255.
-            image = np.reshape(image, (1, image.shape[ 0 ], image.shape[ 1 ], image.shape[ 2 ]))
-            [ predict, probab ] = sess.run([ self.predict, self.probab ], feed_dict={self.x: image})
-           # predict = sess.run(self.predict, feed_dict={self.x: image})
-           # print("what? 1：",np.max(probab))
-           # print("what? 2：",predict[0])
-            return predict[0]
-            if (np.max(probab)<1):
-                print("recognise fail")
-                predict=4
-            print(predict)
-
-        elif type == 'video':
-            capture = cv2.VideoCapture(0)
-            while True:
-                ret, frame = capture.read()
-                resize = cv2.resize(frame, (200, 200))
-                x_ = np.asarray(resize, np.float32) / 255.
-                x_ = np.reshape(x_, [ 1, x_.shape[ 0 ], x_.shape[ 1 ], x_.shape[ 2 ] ])
-                [ predict, probab ] = sess.run([ self.predict, self.probab ], feed_dict={self.x: x_})
-                if predict == 0:
-                    cv2.putText(frame, "0 probab: %.3f" % np.max(probab), (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 2,
-                                (0, 0, 255), 2, cv2.LINE_AA)
-                elif predict == 1:
-                    cv2.putText(frame, "1 probab: %.3f" % np.max(probab), (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 2,
-                                (0, 255, 255), 2, cv2.LINE_AA)
-                elif predict == 2:
-                    cv2.putText(frame, "2 probab: %.3f" % np.max(probab), (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 2,
-                                (0, 255, 0), 2, cv2.LINE_AA)
-                elif predict == 3:
-                    cv2.putText(frame, "3 probab: %.3f" % np.max(probab), (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 2,
-                                (255, 0, 255), 2, cv2.LINE_AA)
-                elif predict == 4:
-                    cv2.putText(frame, "4 probab: %.3f" % np.max(probab), (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 2,
-                                (255, 0, 255), 2, cv2.LINE_AA)
-                if predict==3:
-                    print("1111")
-
-                print(predict)
-
-                cv2.imshow("recognized", frame)
-                key = cv2.waitKey(1)
-                if key == 27:
-                    break
-            cv2.destroyAllWindows()
-            capture.release()
-```
-
-![result1](images/result1.png)  
-*圖八：蔬菜類圖像辨識結果*  
-
-![result2](images/result2.png)  
-*圖九：易拉罐類圖片辨識效果*  
-
-
+<img width="695" height="508" alt="image" src="https://github.com/user-attachments/assets/162a7f09-703f-4272-9141-c7ef724c3e3e" />
 
 ---
 
-## 結果展示
+**模型建立與訓練**
 
-### 性能指標
+<img width="580" height="619" alt="image" src="https://github.com/user-attachments/assets/c0f654a3-b76d-47d0-b8ee-2ac129da74ab" />
 
-| 指標 | 訓練集 | 測試集 |
-|------|--------|--------|
-| Accuracy | 95.6% | 92.3% |
-| Loss | 0.124 | 0.189 |
-
-![Confusion Matrix](images/confusion.png)  
-*圖十一：混淆矩陣*  
-
-![Bar Image](images/accuracy.png)  
-*圖十二：各類別辨識準確率長條圖*  
+<img width="727" height="594" alt="image" src="https://github.com/user-attachments/assets/e49fb419-1e3d-4b5b-b76a-75e23330a63f" />
 
 ---
 
-## 專案結構
+**預測與結果顯示**
 
-```
-cnn-image-classification/
-├── picture/               # 數據集目錄
-│   ├── 0-0.jpg
-│   ├── 0-1.jpg
-│   └── ...
-├── h5_dell/              # 訓練模型保存目錄
-│   ├── mode.ckpt.data
-│   ├── mode.ckpt.index
-│   └── ...
-├── log/                  # TensorBoard日誌
-├── data_preprocess.py    # 數據預處理腳本
-├── train.py              # 模型訓練腳本
-├── predict.py            # 圖像識別腳本
-├── requirements.txt      # 依賴套件
-├── notebook.ipynb        # Jupyter Notebook
-└── README.md             # 項目說明
-```
+<img width="600" height="727" alt="image" src="https://github.com/user-attachments/assets/c6f9be5c-7e13-442d-af7b-71c97c975b9a" />
 
 ---
 
-
-## 總結
-
-本專案以實際案例介紹了神經網路影像辨識演算法的建構及使用詳細步驟，介紹了卷積神經網路實現影像辨識分類的詳細過程，以及實現效果的展示。
-
-**項目亮點：**
-- ✅ 完整的數據預處理流程
-- ✅ 清晰的CNN網路架構
-- ✅ 詳細的訓練過程記錄
-- ✅ 支援圖片和視訊即時識別
-- ✅ 適合Google Colab運行
+<img width="453" height="155" alt="image" src="https://github.com/user-attachments/assets/f75ebcc2-5083-4524-ad92-3b4794dc4fc9" />
 
 
+**建立分類器:**
 
+        classifier = SafeImageClassifier(image_path)
 
+image_path 是資料集根目錄。會自動掃描資料夾，將每個子資料夾視為一個類別。初始化時會列出類別名稱。
 
+**圖片處理:**
 
+        classifier.resize_images()
+        
+將每個類別資料夾中的圖片 resize 成固定大小（200×200）。
 
+避免訓練時因為尺寸不同造成錯誤。
+        
+        classifier.generate_csv()
 
+生成 CSV，記錄每張圖片路徑與對應標籤。
 
+CSV 方便後續讀取訓練資料。
 
+---
 
+**建立模型:**
 
+        classifier.build_model()
+
+建立 CNN 模型：
+
+        3 層卷積 + 最大池化 + BatchNorm、 GlobalAveragePooling、 Dense + Dropout、 最後輸出類別數的 softmax
+
+編譯模型，設定損失函數與優化器。
+
+---
+
+**訓練模型**
+
+        classifier.train(epochs=10, batch_size=2)
+
+讀取 CSV 中的圖片與標籤。
+
+將標籤 one-hot encoding。
+
+切分訓練集與驗證集（80%/20%）。
+
+開始訓練模型。
+
+---
+
+# 結果圖
+
+<img width="580" height="612" alt="image" src="https://github.com/user-attachments/assets/4accef56-40ed-4388-83a3-9a09cb2c5e25" />
+
+<img width="559" height="597" alt="image" src="https://github.com/user-attachments/assets/c3985ebb-d758-4cc7-be0c-446fc1361250" />
